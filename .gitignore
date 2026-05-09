@@ -12,3 +12,5 @@ wheels/
 # SKZ data
 data/Rohbilder
 data/Thermographie
+
+artifacts/fusion_model.pt
