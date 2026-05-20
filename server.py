@@ -323,6 +323,16 @@ def index():
     return render_template_string(HTML, samples=samples, total=len(df))
 
 
+@app.route("/report")
+def report():
+    """Serve the system performance report."""
+    report_file = ROOT / "artifacts" / "REPORT.html"
+    if report_file.exists():
+        with open(report_file, "r") as f:
+            return f.read()
+    return "<h1>Report not found</h1>", 404
+
+
 @app.route("/api/sample/<int:idx>")
 def api_sample(idx):
     if idx < 0 or idx >= len(df):
@@ -664,6 +674,9 @@ HTML = r"""<!DOCTYPE html>
     <div class="sub">Injection Moulding Defect Detection · Multi-Modal Analysis<br>
       {{ total }} cycles · 4 modalities: Thermal IR · CV · DXP Sequence · Tabular</div>
   </div>
+  <a href="/report" style="padding: 10px 20px; background: #222; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: transform 0.2s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+    📊 System Report
+  </a>
 </header>
 
 <div class="wrap">

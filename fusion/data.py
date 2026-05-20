@@ -355,3 +355,43 @@ def collate_fn(batch: List[Dict]) -> Dict[str, Any]:
         else:
             out[k] = vals
     return out
+
+
+def get_class_balanced_loader(dataset: MultiModalDataset, df: pd.DataFrame,
+                               batch_size: int, shuffle: bool = True, num_workers: int = 0):
+    """
+    Create a DataLoader with WeightedRandomSampler for class-balanced sampling.
+    This ensures that each batch contains a representative mix of classes.
+    
+    Strategy: Compute weights based on inverse class frequency (rare classes weighted higher).
+    """
+    from torch.utils.data import WeightedRandomSampler
+    
+    # Compute weights for each sample based on label frequency
+    # For multi-label, use the mean weight across all positive labels for each sample
+    weights = np.ones(len(df))
+    
+    for idx, row in df.iterrows():
+        label_weights = []
+        for col in C.LABEL_COLS:
+            n_pos = df[col].sum()
+            n_total = len(df)
+            # Weight = inverse frequency, capped to avoid extreme values
+            weight = min(n_total / (n_pos + 1), 20.0)
+            if row[col] > 0:
+                label_weights.append(weight)
+        
+        if label_weights:
+            weights[idx] = np.mean(label_weights)
+        else:
+            # Negative samples get a small baseline weight
+            weights[idx] = 0.5
+    
+    # Normalize weights
+    weights = weights / weights.sum() * len(weights)
+    
+    sampler = WeightedRandomSampler(weights, num_samples=len(dataset), replacement=True)
+    
+    loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler,
+                       collate_fn=collate_fn, num_workers=num_workers)
+    return loader

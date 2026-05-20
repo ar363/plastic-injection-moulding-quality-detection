@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
 from . import config as C
-from .data import MultiModalDataset, collate_fn, load_tabular_vector, load_parquet, build_cv_index, join_cv_to_parquet, get_tabular_cols, get_dxp_cols
+from .data import MultiModalDataset, collate_fn, get_class_balanced_loader, load_tabular_vector, load_parquet, build_cv_index, join_cv_to_parquet, get_tabular_cols, get_dxp_cols
 
 log = logging.getLogger(__name__)
 
@@ -141,7 +141,7 @@ def train_epoch(model, loader, loss_fn, optimizer, device, exp_label_map, train=
 
 
 def prepare_data(df, tabular_cols, dxp_cols):
-    """Fit scaler, compute medians, return Dataset + DataLoader."""
+    """Fit scaler, compute medians, return Dataset + DataLoader with class-balanced sampling."""
     scaler = StandardScaler()
     tab_vals = [load_tabular_vector(row, tabular_cols) for _, row in df.iterrows()]
     arr = np.array(tab_vals)
@@ -165,8 +165,9 @@ def prepare_data(df, tabular_cols, dxp_cols):
     ds = MultiModalDataset(df, tabular_cols, dxp_cols,
                            tabular_medians=tab_medians, roi_medians=roi_medians,
                            scaler=scaler)
-    loader = DataLoader(ds, batch_size=C.BATCH_SIZE, shuffle=True,
-                        collate_fn=collate_fn, num_workers=0)
+    # IMPROVED: Use class-balanced loader for better minority class representation
+    loader = get_class_balanced_loader(ds, df, batch_size=C.BATCH_SIZE, 
+                                       shuffle=True, num_workers=0)
     return loader, scaler, tab_medians, roi_medians
 
 

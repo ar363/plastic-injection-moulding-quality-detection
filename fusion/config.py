@@ -30,7 +30,9 @@ LABEL_COLS = [
 N_LABELS = len(LABEL_COLS)
 PRIMARY_TARGET = "LBL_NOK"
 
-TABULAR_PREFIXES = ("SET_", "QUA_", "ENV_", "CALC_", "DOS_", "DRY_", "SIM_")
+# IMPROVED: Only raw process parameters (no pre-extracted features)
+TABULAR_PREFIXES = ("SET_", "QUA_", "ENV_", "CALC_", "DOS_", "DRY_")
+# IR_Img* and SIM_* columns are excluded to avoid feature leakage
 SEQUENCE_PREFIX  = "DXP_"
 GROUP_COL    = "MET_ExperimentNumber"
 CYCLE_ID_COL = "MET_MachineCycleID"
@@ -55,36 +57,36 @@ THERMAL_INPUT_SIZE      = 224       # resize target for EfficientNet
 CV_INPUT_SIZE           = 224       # resize target per section
 
 # =========================================================================
-# Embedding dimensions
+# Embedding dimensions (IMPROVED: larger for better expressiveness)
 # =========================================================================
 THERMAL_EMB_DIM  = 512
 VISUAL_EMB_DIM   = 512
 TCN_EMB_DIM      = 256
-TABULAR_EMB_DIM  = 192
-FUSION_TOKEN_DIM = 256
+TABULAR_EMB_DIM  = 256  # Increased from 192
+FUSION_TOKEN_DIM = 384  # Increased from 256
 FUSION_N_HEADS   = 4
 FUSION_N_LAYERS  = 2
 FUSION_DROPOUT   = 0.1
 
 # =========================================================================
-# Training
+# Training (IMPROVED: better hyperparameters for class imbalance)
 # =========================================================================
 SEED         = 42
-BATCH_SIZE   = 16
-NUM_EPOCHS   = 60
-LR_BACKBONE  = 1e-5
-LR_HEAD      = 1e-4
-WEIGHT_DECAY = 1e-4
-PATIENCE     = 10
+BATCH_SIZE   = 24  # Increased from 16
+NUM_EPOCHS   = 100  # Increased from 60
+LR_BACKBONE  = 5e-5  # Increased from 1e-5 (more learning)
+LR_HEAD      = 1e-3  # Increased from 1e-4
+WEIGHT_DECAY = 1e-5  # Decreased from 1e-4 (less regularization for small dataset)
+PATIENCE     = 15
 GRAD_CLIP    = 1.0
 
 # DANN
-DANN_LAMBDA_MAX = 0.5
-DANN_WARMUP_EP  = 10
+DANN_LAMBDA_MAX = 0.8  # Increased from 0.5 for stronger domain adaptation
+DANN_WARMUP_EP  = 15   # Increased from 10
 
-# Focal loss
-FOCAL_ALPHA = 0.75
-FOCAL_GAMMA = 2.0
+# Focal loss (IMPROVED: more aggressive for rare classes)
+FOCAL_ALPHA = 0.85  # Increased from 0.75
+FOCAL_GAMMA = 2.5   # Increased from 2.0
 
 # =========================================================================
 # Sequence (TCN)
