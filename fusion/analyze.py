@@ -346,7 +346,7 @@ def write_report(complexity, history, metrics, token_weights, ablation, out_dir)
     n_params = complexity["total_params"]
     gflops = complexity["gflops"]
 
-    report = f"""# Multi-Sensor Fusion System — Demo Report
+    report = f"""# Multi-Modal Fusion Quality Control System — Report
 
 ## 1. Algorithmic Complexity
 

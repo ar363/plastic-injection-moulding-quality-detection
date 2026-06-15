@@ -1,1 +1,1 @@
-"""Injection Moulding Multi-Sensor Fusion System."""
+"""Multi-Modal Fusion Quality Control System for Plastic Injection Moulding Defect Detection."""

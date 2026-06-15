@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-server.py — Multi-Modal Fusion QC System
+server.py — Multi-Modal Fusion Quality Control System for
  Plastic Injection Moulding Defect Detection
 =================================================
 Serves thermal, CV, DXP, and tabular data for the injection moulding
@@ -509,7 +509,7 @@ def api_stats():
 # ── Main ──
 if __name__ == "__main__":
  print("=" * 50)
- print("Multi-Modal Fusion QC System")
+ print("Multi-Modal Fusion Quality Control System for")
  print("=" * 50)
  print(f" Samples  : {len(df)}")
  print(f" Thermal CSVs: {len(list(THERMAL_DIR.glob('*.csv')))}")
