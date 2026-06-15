@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Modal Fusion QC System — Plastic Injection Moulding Defect Detection</title>
+<style>
+ :root {
+ --bg: #ffffff; --card: #f6f8fa; --card2: #eef1f5;
+ --border: #d0d7de; --text: #1f2328; --muted: #656d76;
+ --accent: #0969da; --ok: #1a7f37; --nok: #cf222e;
+ --warn: #9a6700; --thermal: #d0602a; --visual: #0969da;
+ --seq: #1a7f37; --tabular: #8250df;
+ }
+ * { margin:0; padding:0; box-sizing:border-box; }
+ html { scroll-behavior: smooth; }
+ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+   background: var(--bg); color: var(--text); min-height: 100vh; }
+ 
+ header {
+ background: linear-gradient(180deg, #ffffff 0%, #f6f8fa 100%);
+ border-bottom: 1px solid var(--border); padding: 20px 24px;
+ display: flex; justify-content: space-between; align-items: center;
+ position: sticky; top: 0; z-index: 100; gap: 20px;
+ }
+ header h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.5px; }
+ header h1 span { color: var(--accent); }
+ header .sub { font-size: 0.72rem; color: var(--muted); line-height: 1.5; }
+ 
+ .wrap { max-width: 1520px; margin: 0 auto; padding: 20px; }
+
+ /* Controls Bar */
+ .bar {
+ display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+ background: var(--card); padding: 14px 18px; border-radius: 10px;
+ border: 1px solid var(--border); margin-bottom: 18px;
+ box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+ }
+ .bar label { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+ select, button, .btn {
+ background: var(--card2); color: var(--text); border: 1px solid var(--border);
+ padding: 8px 14px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;
+ font-family: inherit; transition: all 0.2s ease;
+ }
+ select:hover, button:hover, .btn:hover {
+ background: var(--border); border-color: var(--accent);
+ }
+ select:focus, button:focus, .btn:focus {
+ outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(9,105,218,0.15);
+ }
+ .btn-accent { background: #0969da; border-color: #0969da; color: #fff; font-weight: 600; }
+ .btn-accent:hover { background: #0550ae; border-color: #0550ae; }
+ 
+ /* Pills */
+ .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+ .pill {
+ padding: 5px 12px; border-radius: 14px; font-size: 0.75rem; font-weight: 600;
+ border: 1px solid; transition: all 0.2s ease;
+ }
+ .pill-ok { background: rgba(63,185,80,0.15); color: var(--ok); border-color: rgba(63,185,80,0.3); }
+ .pill-nok { background: rgba(248,81,73,0.15); color: var(--nok); border-color: rgba(248,81,73,0.3); }
+ .pill-sy { background: rgba(210,153,34,0.15); color: var(--warn); border-color: rgba(210,153,34,0.3); }
+ .pill-info { background: rgba(9,105,218,0.08); color: var(--accent); border-color: rgba(9,105,218,0.15); }
+
+ /* Grid */
+ .grid { display: grid; gap: 16px; }
+ .g2 { grid-template-columns: 1fr 1fr; }
+ .g3 { grid-template-columns: 1fr 1fr 1fr; }
+ .g1-2 { grid-template-columns: 1fr 2fr; }
+ .g2-1 { grid-template-columns: 2fr 1fr; }
+ @media (max-width: 1100px) {
+ .g2, .g1-2, .g2-1 { grid-template-columns: 1fr; }
+ .g3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+ }
+
+ /* Cards */
+ .card {
+ background: var(--card); border: 1px solid var(--border);
+ border-radius: 10px; overflow: hidden;
+ box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+ transition: all 0.3s ease;
+ }
+ .card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(9,105,218,0.1); }
+ 
+ .card-h {
+ background: var(--card2); padding: 12px 16px; font-size: 0.8rem;
+ font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+ border-bottom: 1px solid var(--border);
+ display: flex; justify-content: space-between; align-items: center; gap: 10px;
+ }
+ .card-b { padding: 14px; }
+ .card img { width: 100%; border-radius: 6px; display: block; margin-top: 4px; }
+
+ /* Prediction rows */
+ .prow {
+ display: flex; align-items: center; gap: 12px; padding: 6px 0;
+ border-bottom: 1px solid rgba(0,0,0,0.04);
+ transition: background 0.2s ease;
+ }
+ .prow:last-child { border-bottom: none; }
+ .prow:hover { background: rgba(9,105,218,0.05); padding: 6px 6px; border-radius: 4px; }
+ 
+ .plabel { width: 120px; font-size: 0.78rem; font-weight: 600; flex-shrink: 0; color: var(--muted); }
+ .pbar-bg { flex: 1; height: 20px; background: rgba(0,0,0,0.04); border-radius: 4px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); }
+ .pbar { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+ .pbar-ok { background: linear-gradient(90deg, #116329, #1a7f37); }
+ .pbar-nok { background: linear-gradient(90deg, #a0111f, #cf222e); }
+ .pval { width: 52px; text-align: right; font-size: 0.78rem; font-weight: 700; font-family: 'SF Mono', monospace; }
+ .pmatch { width: 28px; text-align: center; font-size: 0.9rem; }
+
+ /* Attention */
+ .arow { display: flex; align-items: center; gap: 10px; padding: 5px 0; margin-bottom: 2px; }
+ .alabel { width: 100px; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+ .abar-bg { flex: 1; height: 14px; background: rgba(0,0,0,0.04); border-radius: 3px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); }
+ .abar { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+ .aval { width: 48px; text-align: right; font-size: 0.75rem; font-weight: 700; font-family: 'SF Mono', monospace; }
+
+ /* Tabular */
+ .tgroup { margin-top: 10px; }
+ .tgtitle { font-size: 0.75rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+ .tgkv { display: inline-block; margin: 2px 14px 2px 0; font-size: 0.72rem; }
+ .tgkv .k { color: var(--muted); font-weight: 600; }
+ .tgkv .v { color: var(--text); }
+
+ /* Stats */
+ .stat { text-align: center; padding: 16px 10px; }
+ .stat .val { font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; }
+ .stat .lbl { font-size: 0.7rem; color: var(--muted); margin-top: 4px; font-weight: 500; }
+
+ /* Loading */
+ .loading { display: flex; align-items: center; justify-content: center;
+ min-height: 160px; color: var(--muted); font-size: 0.8rem;
+ border: 1px dashed var(--border); border-radius: 6px; background: rgba(0,0,0,0.02); }
+
+ /* Reason tooltip */
+ .reason { font-size: 0.68rem; color: var(--warn); margin-left: 8px; font-style: italic; opacity: 0.9; }
+
+ /* Score badge */
+ .score-badge {
+ display: inline-block; padding: 4px 10px; border-radius: 12px;
+ font-size: 0.75rem; font-weight: 700; background: rgba(9,105,218,0.1);
+ color: var(--accent); border: 1px solid rgba(9,105,218,0.2);
+ }
+
+ /* Nav info */
+ #navInfo { font-family:'SF Mono',monospace; font-size:0.85rem; color:var(--accent); font-weight: 600; }
+ #statusText { font-size:0.78rem; color:var(--muted); }
+ 
+ /* Details/Summary */
+ details { margin-bottom: 18px; }
+ summary {
+ cursor: pointer; font-weight: 700; color: var(--accent); padding: 8px 0;
+ font-size: 0.9rem; transition: all 0.2s ease; user-select: none;
+ }
+ summary:hover { color: #0550ae; }
+ details[open] summary { margin-bottom: 12px; }
+
+ /* Spinner for prediction button */
+ @keyframes spin { to { transform: rotate(360deg); } }
+ .spinner {
+ display: inline-block; width: 18px; height: 18px;
+ border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+ border-radius: 50%; animation: spin 0.7s linear infinite;
+ margin-right: 8px; vertical-align: middle;
+ }
+
+ /* Tabular columns — 3 groups in parallel */
+ .tabular-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+ .tabular-cols .tcol {
+ border-right: 1px solid var(--border); padding: 12px;
+ }
+ .tabular-cols .tcol:last-child { border-right: none; }
+ .tcol-title {
+ font-size: 0.7rem; font-weight: 700; color: var(--accent);
+ text-transform: uppercase; letter-spacing: 0.3px;
+ border-bottom: 2px solid var(--accent); padding-bottom: 6px; margin-bottom: 8px;
+ }
+ .tcol-row {
+ display: flex; justify-content: space-between; align-items: center;
+ padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.04);
+ font-size: 0.72rem;
+ }
+ .tcol-row:last-child { border-bottom: none; }
+ .tcol-row .k { color: var(--muted); font-weight: 600; }
+ .tcol-row .v { color: var(--text); font-weight: 600; font-family: 'SF Mono', monospace; font-size: 0.7rem; }
+ @media (max-width: 900px) {
+ .tabular-cols { grid-template-columns: 1fr; }
+ .tabular-cols .tcol { border-right: none; border-bottom: 1px solid var(--border); }
+ }
+</style>
+</head>
+<body>
+
+<header>
+ <div>
+ <h1>Multi-Modal Fusion <span>QC</span> System</h1>
+ <div class="sub">Plastic Injection Moulding Defect Detection<br>
+  {{ total }} cycles · Thermal IR · CV · DXP · Tabular</div>
+ </div>
+ <a href="/report" style="padding: 10px 20px; background: #0969da; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: transform 0.2s ease; box-shadow: 0 4px 12px rgba(9, 105, 218, 0.3);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+  Report
+ </a>
+</header>
+
+<div class="wrap">
+
+ <!-- Navigation & Controls -->
+ <div class="bar">
+ <button onclick="prevSample()" title="← (ArrowLeft)" style="min-width:80px">◀ Prev</button>
+ <button onclick="nextSample()" title="→ (ArrowRight)" style="min-width:80px">Next ▶</button>
+ <span id="navInfo">#0 / {{ total }}</span>
+
+ <span style="color:var(--border);margin:0 6px">│</span>
+
+ <label>Filter:</label>
+ <select id="defectFilter" onchange="doSearch()">
+  <option value="any">All Samples</option>
+  <option value="NOK">NOK Only</option>
+  <option value="OK">OK Only</option>
+  <option value="SinkMarks">Sink Marks</option>
+  <option value="SprueCircle">Sprue Circle</option>
+  <option value="Underfilled">Underfilled</option>
+  <option value="StreaksLevel1">Streaks L1</option>
+  <option value="StreaksLevel2">Streaks L2</option>
+  <option value="StreaksLevel3">Streaks L3</option>
+ </select>
+
+ <select id="materialFilter" onchange="doSearch()">
+  <option value="any">Any Material</option>
+ </select>
+
+ <span style="flex:1"></span>
+ <span id="statusText">Ready</span>
+ </div>
+
+ <!-- Metadata Pills -->
+ <div class="pills" id="metaPills"></div>
+
+ <!-- Thermal + CV (same as before) -->
+ <div class="grid g2" style="margin-bottom:18px">
+ <div class="card">
+  <div class="card-h"><span style="color:var(--thermal)"> Thermal Infrared</span><span style="color:var(--muted);font-size:0.65rem">480×640 CSV Matrix</span></div>
+  <div class="card-b" id="thermalCard"><div class="loading">Select a sample</div></div>
+ </div>
+ <div class="card">
+  <div class="card-h"><span style="color:var(--visual)">Computer Vision</span><span style="color:var(--muted);font-size:0.65rem">3 Surface Sections</span></div>
+  <div class="card-b" id="cvCard"><div class="loading">Select a sample</div></div>
+ </div>
+ </div>
+
+ <!-- Injection Cycle Timeline (moved up) -->
+ <div class="card" style="margin-bottom:18px">
+ <div class="card-h"><span style="color:var(--seq)">Injection Cycle Timeline</span><span style="color:var(--muted);font-size:0.65rem">High-Frequency DXP Process Channels</span></div>
+ <div class="card-b" id="dxpCard"><div class="loading">Select a sample</div></div>
+ </div>
+
+ <!-- Tabular Data Representation (visual table) -->
+ <div class="card" style="margin-bottom:18px">
+ <div class="card-h"><span style="color:var(--tabular)">Tabular Process Data</span><span style="color:var(--muted);font-size:0.65rem">Machine Setpoints &amp; Thermal ROI Metrics</span></div>
+ <div class="card-b" id="tabularCard" style="padding:0;overflow-x:auto">
+  <div class="loading" style="min-height:100px">Select a sample to view tabular data</div>
+ </div>
+ </div>
+
+ <!-- Predictions + Attention (moved down, interactive) -->
+ <div class="grid g2" style="margin-bottom:18px">
+ <div class="card">
+  <div class="card-h">
+  <span>Defect Predictions</span>
+  <span id="scoreBadge" class="score-badge" style="display:none">—</span>
+  </div>
+  <div class="card-b" id="predCard">
+  <button id="runPredBtn" class="btn btn-accent" onclick="runPredictions()" style="width:100%;padding:14px;font-size:1rem">
+   Run Predictions
+  </button>
+  <div id="predResults" style="display:none"></div>
+  </div>
+ </div>
+ <div class="card">
+  <div class="card-h"><span>Modality Attention</span></div>
+  <div class="card-b">
+  <div id="attnBars">
+   <div class="arow"><div class="alabel">Thermal</div><div class="abar-bg"><div class="abar" style="width:0%;background:var(--thermal)"></div></div><div class="aval">—</div></div>
+   <div class="arow"><div class="alabel">Visual</div><div class="abar-bg"><div class="abar" style="width:0%;background:var(--visual)"></div></div><div class="aval">—</div></div>
+   <div class="arow"><div class="alabel">DXP Seq</div><div class="abar-bg"><div class="abar" style="width:0%;background:var(--seq)"></div></div><div class="aval">—</div></div>
+   <div class="arow"><div class="alabel">Tabular</div><div class="abar-bg"><div class="abar" style="width:0%;background:var(--tabular)"></div></div><div class="aval">—</div></div>
+  </div>
+  </div>
+ </div>
+ </div>
+
+ <!-- Dataset Overview removed per request -->
+
+</div>
+
+<script>
+let curIdx = 0;
+let total = {{ total }};
+let samples = {{ samples | tojson }};
+let _pendingSampleData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+ loadSample(0);
+ // Populate material filter
+ fetch('/api/stats').then(r=>r.json()).then(d => {
+ const sel = document.getElementById('materialFilter');
+ for (const [mat, info] of Object.entries(d.materials)) {
+  const opt = document.createElement('option');
+  opt.value = mat;
+  opt.textContent = `${mat} (${info.nok_rate}% NOK)`;
+  sel.appendChild(opt);
+ }
+ }).catch(()=>{});
+ document.addEventListener('keydown', e => {
+ if (e.key === 'ArrowLeft') { e.preventDefault(); prevSample(); }
+ if (e.key === 'ArrowRight') { e.preventDefault(); nextSample(); }
+ });
+});
+
+function prevSample() {
+ if (curIdx > 0) { curIdx--; loadSample(curIdx); }
+}
+function nextSample() {
+ if (curIdx < total - 1) { curIdx++; loadSample(curIdx); }
+}
+
+async function loadSample(idx) {
+ curIdx = idx;
+ _pendingSampleData = null;
+ document.getElementById('navInfo').textContent = '#' + idx + ' / ' + total;
+ document.getElementById('statusText').textContent = 'Loading...';
+ document.getElementById('statusText').style.color = 'var(--warn)';
+ 
+ // Only clear data cards, keep predictions button visible
+ ['thermalCard','cvCard','dxpCard','tabularCard'].forEach(id => {
+ document.getElementById(id).innerHTML = '<div class="loading">Loading...</div>';
+ });
+ // Reset predictions to button state
+ document.getElementById('runPredBtn').style.display = 'block';
+ document.getElementById('runPredBtn').disabled = false;
+ document.getElementById('runPredBtn').innerHTML = ' Run Predictions';
+ document.getElementById('predResults').style.display = 'none';
+ document.getElementById('predResults').innerHTML = '';
+ document.getElementById('scoreBadge').style.display = 'none';
+ // Reset attention
+ ['Thermal','Visual','DXP Seq','Tabular'].forEach((mod, i) => {
+ const bars = document.getElementById('attnBars').querySelectorAll('.abar');
+ if (bars[i]) { bars[i].style.width = '0%'; }
+ const vals = document.getElementById('attnBars').querySelectorAll('.aval');
+ if (vals[i]) { vals[i].textContent = '—'; }
+ });
+
+ try {
+ const r = await fetch('/api/sample/' + idx);
+ if (!r.ok) throw new Error('Sample not found');
+ const d = await r.json();
+ _pendingSampleData = d;
+ renderSample(d);
+ document.getElementById('statusText').textContent = 'Ready';
+ document.getElementById('statusText').style.color = 'var(--muted)';
+ } catch(e) {
+ console.error(e);
+ document.getElementById('statusText').textContent = 'Error loading sample';
+ document.getElementById('statusText').style.color = 'var(--nok)';
+ }
+}
+
+function renderSample(d) {
+ const m = d.meta;
+ const nok = m.nok_gt;
+
+ // Metadata Pills
+ let pillHtml = `<span class="pill ${nok ? 'pill-nok' : 'pill-ok'}">${nok ? 'NOK' : 'OK'}</span>`;
+ pillHtml += `<span class="pill pill-info">Material: ${m.material}</span>`;
+ pillHtml += `<span class="pill pill-info">Exp: ${m.experiment}</span>`;
+ pillHtml += `<span class="pill pill-info">Cycle ID: ${m.cycle_id}</span>`;
+ pillHtml += `<span class="pill pill-info">Weight: ${m.weight}g</span>`;
+ pillHtml += `<span class="pill pill-info">Cyl: ${m.cyl_temp}°C</span>`;
+ pillHtml += `<span class="pill pill-info">Mold: ${m.mold_temp}°C</span>`;
+ if (d.idx >= 204) {
+ pillHtml += `<span class="pill pill-sy">CV: Synthetic</span>`;
+ }
+ document.getElementById('metaPills').innerHTML = pillHtml;
+
+ // Thermal Image
+ if (d.thermal) {
+ document.getElementById('thermalCard').innerHTML = `<img src="data:image/jpeg;base64,${d.thermal}" alt="Thermal">`;
+ } else {
+ document.getElementById('thermalCard').innerHTML = '<div class="loading"> No thermal data available</div>';
+ }
+
+ // CV Images
+ if (d.cv) {
+ document.getElementById('cvCard').innerHTML = `<img src="data:image/jpeg;base64,${d.cv}" alt="CV">`;
+ } else {
+ document.getElementById('cvCard').innerHTML = '<div class="loading"> No CV images available</div>';
+ }
+
+ // DXP Sequence
+ if (d.dxp) {
+ document.getElementById('dxpCard').innerHTML = d.dxp;
+ } else {
+ document.getElementById('dxpCard').innerHTML = '<div class="loading"> No DXP sequence data</div>';
+ }
+
+ // Tabular Features (3 parallel columns)
+ if (d.tabular) {
+ let html = '<div class="tabular-cols">';
+ for (const [group, feats] of Object.entries(d.tabular)) {
+  html += `<div class="tcol"><div class="tcol-title">${group}</div>`;
+  for (const [k, v] of Object.entries(feats)) {
+  html += `<div class="tcol-row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  }
+  html += '</div>';
+ }
+ html += '</div>';
+ document.getElementById('tabularCard').innerHTML = html;
+ } else {
+ document.getElementById('tabularCard').innerHTML = '<div class="loading"> No tabular data available</div>';
+ }
+}
+
+async function runPredictions() {
+ const btn = document.getElementById('runPredBtn');
+ btn.disabled = true;
+ btn.innerHTML = '<span class="spinner"></span> Running predictions...';
+
+ // Simulate processing delay for realism
+ await new Promise(r => setTimeout(r, 800));
+
+ const d = _pendingSampleData;
+ if (!d || !d.predictions) {
+ btn.innerHTML = 'Run Predictions';
+ btn.disabled = false;
+ return;
+ }
+
+ // Hide button, show results
+ btn.style.display = 'none';
+
+ // Render Predictions
+ let html = '';
+ for (const [label, p] of Object.entries(d.predictions)) {
+ const nokLabel = label === 'NOK';
+ const barClass = nokLabel ? 'pbar-nok' : 'pbar-ok';
+ const matchIcon = p.match ? '✓' : '✗';
+ const matchColor = p.match ? 'var(--ok)' : 'var(--nok)';
+ html += `<div class="prow">
+  <div class="plabel">${label}</div>
+  <div class="pbar-bg"><div class="pbar ${barClass}" style="width:${(p.prob*100).toFixed(1)}%"></div></div>
+  <div class="pval">${p.prob.toFixed(3)}</div>
+  <div class="pmatch" style="color:${matchColor};font-weight:700">${matchIcon}</div>
+ </div>`;
+ }
+ document.getElementById('predResults').innerHTML = html;
+ document.getElementById('predResults').style.display = 'block';
+ document.getElementById('scoreBadge').textContent = `${d.correct}/${d.total} correct`;
+ document.getElementById('scoreBadge').style.color = d.correct > d.total/2 ? 'var(--ok)' : 'var(--warn)';
+ document.getElementById('scoreBadge').style.display = 'inline-block';
+
+ // Render Attention
+ if (d.attention) {
+ const colors = { 
+  'Thermal': 'var(--thermal)', 
+  'Visual': 'var(--visual)',
+  'DXP Sequence': 'var(--seq)', 
+  'Tabular': 'var(--tabular)' 
+ };
+ let attnHtml = '';
+ for (const [mod, w] of Object.entries(d.attention)) {
+  attnHtml += `<div class="arow">
+  <div class="alabel">${mod}</div>
+  <div class="abar-bg"><div class="abar" style="width:${(w*100).toFixed(1)}%;background:${colors[mod]||'#666'}"></div></div>
+  <div class="aval">${w.toFixed(3)}</div>
+  </div>`;
+ }
+ document.getElementById('attnBars').innerHTML = attnHtml;
+ }
+
+ document.getElementById('statusText').textContent = 'Predictions complete';
+}
+
+async function doSearch() {
+ const defect = document.getElementById('defectFilter').value;
+ const material = document.getElementById('materialFilter').value;
+ const r = await fetch(`/api/search?defect=${defect}&material=${material}`);
+ const d = await r.json();
+ if (d.results.length > 0) {
+ curIdx = d.results[0].idx;
+ total = d.results.length;
+ loadSample(curIdx);
+ } else {
+ document.getElementById('statusText').textContent = 'No matches found';
+ document.getElementById('statusText').style.color = 'var(--nok)';
+ }
+}
+
+</script>
+</body>
+</html>

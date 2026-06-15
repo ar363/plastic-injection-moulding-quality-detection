@@ -16,3 +16,4 @@ data/*.py
 data/*.md
 
 artifacts/fusion_model.pt
+.image_cache
